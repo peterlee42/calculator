@@ -7,38 +7,46 @@ let waitingForSecondOperand = false;
 
 function updateDisplay() {
 	const display = document.querySelector('.display');
+
 	let displayStr = displayValue;
 
-	// Convert to scientific notation if too long
-	if (displayStr.length > 16) {
-		const num = parseFloat(displayValue);
-		displayStr = num.toExponential(10); // 10 decimal digits in scientific notation
+	if (parseFloat(displayValue) >= 1.0e100) {
+		displayValue = 'NaN';
+		return;
 	}
 
-	// Truncate to 16 characters max
-	display.textContent =
-		displayStr.length > 16 ? displayStr.substring(0, 16) : displayStr;
+	if (displayStr.length > 16) {
+		const num = parseFloat(displayValue);
+		displayStr = num.toExponential(12);
+	}
+
+	display.textContent = displayStr;
 }
 
 updateDisplay();
 
 buttons.forEach((button) => {
 	button.addEventListener('click', () => {
-		if (button.classList.contains('number')) {
-			inputDigit(button.textContent);
-		} else if (button.classList.contains('operator')) {
-			inputOperator(button.textContent);
-		} else if (button.classList.contains('equals')) {
-			calculate();
-		} else if (button.classList.contains('decimal')) {
-			inputDecimal();
-		} else if (button.classList.contains('clear')) {
-			clear();
-		} else if (button.classList.contains('percent')) {
-			inputPercent();
-		} else if (button.classList.contains('sign')) {
-			inputSign();
+		if (displayValue !== 'NaN') {
+			if (button.classList.contains('number')) {
+				inputDigit(button.textContent);
+			} else if (button.classList.contains('operator')) {
+				inputOperator(button.textContent);
+			} else if (button.classList.contains('equals')) {
+				calculate();
+			} else if (button.classList.contains('decimal')) {
+				inputDecimal();
+			} else if (button.classList.contains('percent')) {
+				inputPercent();
+			} else if (button.classList.contains('sign')) {
+				inputSign();
+			}
 		}
+
+		if (button.classList.contains('clear')) {
+			clear();
+		}
+
 		updateDisplay();
 	});
 });
@@ -73,7 +81,7 @@ function inputOperator(nextOperator) {
 		firstOperand = parseFloat(displayValue);
 	} else if (operator) {
 		const result = operate(firstOperand, parseFloat(displayValue), operator);
-		displayValue = roundAccurately(result, 10).toString();
+		displayValue = result.toString();
 		firstOperand = result;
 	}
 
@@ -85,9 +93,7 @@ function calculate() {
 	if (operator === null || waitingForSecondOperand) return;
 
 	const result = operate(firstOperand, parseFloat(displayValue), operator);
-	console.log(result);
-	displayValue = roundAccurately(result, 10).toString();
-	console.log(displayValue);
+	displayValue = result.toString();
 	firstOperand = null;
 	operator = null;
 	waitingForSecondOperand = false;
@@ -119,8 +125,4 @@ function inputPercent() {
 
 function inputSign() {
 	displayValue = (parseFloat(displayValue) * -1).toString();
-}
-
-function roundAccurately(num, places) {
-	return parseFloat(Math.round(num + 'e' + places) + 'e-' + places);
 }
